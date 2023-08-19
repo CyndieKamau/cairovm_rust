@@ -29,7 +29,6 @@ enum Token {
     U64,
     U128,
     U256,
-    Usize,
 
     //Field element 
     Felt252,
@@ -86,7 +85,7 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
 
             let ident: String = characters.by_ref().take_while(|&ch| ch.is_ascii_alphanumeric() || ch == '_').collect();
 
-            let token = match ident.as_str() {
+            match ident.as_str() {
 
                 "as" => tokens.push(Token::As),
 
@@ -129,6 +128,8 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
                 _ => tokens.push(Token::Identifier(ident)),
 
             };
+
+            continue;
 
         }
 
