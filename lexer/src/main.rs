@@ -50,6 +50,7 @@ enum Token {
     //Variables in Cairo
 
     Identifier(String),
+    Number(String, Option<String>),
 }
 
 #[derive(Debug)]
@@ -77,6 +78,21 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
 
         }
 
+        
+        //tokenize numbers
+
+        if ch.is_digit(10) {
+
+            let number_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
+
+
+            let type_hint = if let Some(&ch) = characters.peek() {
+
+                //write code here...
+
+            }
+
+        }
 
         //tokenize variables 
 
