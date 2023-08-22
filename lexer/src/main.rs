@@ -51,7 +51,7 @@ enum Token {
     //Variables in Cairo
 
     Identifier(String),
-    //Number(String, Option<String>),
+    Number(String, Option<String>),
 }
 
 #[derive(Debug)]
@@ -78,22 +78,6 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
             continue;   
 
         }
-
-        
-        //tokenize numbers
-
-        //if ch.is_digit(10) {
-
-            //let number_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
-
-
-            //let type_hint = if let Some(&ch) = characters.peek() {
-
-                //write code here...
-
-            //};
-
-        //}
 
         //tokenize variables 
 
@@ -148,6 +132,47 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
 
             continue;
 
+        }
+        //tokenize numbers
+
+        if ch.is_digit(10) {
+            let number_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
+
+            // Start with the assumption that there's no type hint
+            let mut type_hint: Option<String> = None;
+
+            // Check for underscore
+            if let Some(&'_') = characters.peek() {
+                characters.next(); // Consume the underscore
+
+                // You can now branch based on the character after the underscore
+                if let Some(&next_ch) = characters.peek() {
+
+                    println!("Character after _: {}", next_ch);
+                    match next_ch {
+                        'u' => {
+                            characters.next();
+                            let type_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
+                            type_hint = Some(type_string);
+                         },
+                         'f' => {
+                             let felt_hint: String = characters.by_ref().take_while(|ch| ch.is_ascii_alphabetic()).collect();
+                             if felt_hint == "felt252" {
+                                 type_hint = Some(felt_hint);
+                             }
+                         }
+                         _ => {}
+                     }
+                 }
+             }
+
+            // Now, decide the final type hint, with a default of "felt252" if none was found
+            let final_type_hint = type_hint.unwrap_or_else(|| "felt252".to_string());
+
+           // Finally, push the token
+           tokens.push(Token::Number(number_string, Some(final_type_hint)));
+
+           continue;
         }
 
         //Check for symbols in our cairo code
@@ -296,6 +321,13 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
                 characters.next();
                 tokens.push(Token::Percent);
 
+            },
+
+            '_' => {
+
+                characters.next();
+                tokens.push(Token::UnderScore);
+ 
             },
 
             _ => {
