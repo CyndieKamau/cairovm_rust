@@ -46,11 +46,12 @@ enum Token {
     Colon, //:
     Equal, //==
     Divide,
+    UnderScore,
 
     //Variables in Cairo
 
     Identifier(String),
-    Number(String, Option<String>),
+    //Number(String, Option<String>),
 }
 
 #[derive(Debug)]
@@ -81,18 +82,18 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
         
         //tokenize numbers
 
-        if ch.is_digit(10) {
+        //if ch.is_digit(10) {
 
-            let number_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
+            //let number_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
 
 
-            let type_hint = if let Some(&ch) = characters.peek() {
+            //let type_hint = if let Some(&ch) = characters.peek() {
 
                 //write code here...
 
-            }
+            //};
 
-        }
+        //}
 
         //tokenize variables 
 
@@ -248,19 +249,54 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
             },
 
 
-            '+' => tokens.push(Token::Plus),
+            '+' => { 
 
-            '*' => tokens.push(Token::Asterik),
+                characters.next();
+                tokens.push(Token::Plus);
 
-            ',' => tokens.push(Token::Comma),
+            },
 
-            '!' => tokens.push(Token::Exclamation),
+            '*' => { 
 
-            ';' => tokens.push(Token::SemiColon),
+                characters.next();
+                tokens.push(Token::Asterik);
 
-            ':' => tokens.push(Token::Colon),
+            },
+            
+            ',' => {
 
-            '%' => tokens.push(Token::Percent),
+                characters.next();
+                tokens.push(Token::Comma);
+
+            },
+
+            '!' => {
+
+                characters.next();
+                tokens.push(Token::Exclamation);
+
+            },
+
+            ';' => {
+
+                characters.next();          
+                tokens.push(Token::SemiColon);
+
+            },
+
+            ':' => { 
+
+                characters.next();
+                tokens.push(Token::Colon);
+
+            },
+
+            '%' => { 
+
+                characters.next();
+                tokens.push(Token::Percent);
+
+            },
 
             _ => {
                 // Here, instead of just skipping, we return an error.
