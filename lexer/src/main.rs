@@ -23,12 +23,12 @@ enum Token {
     True,
 
     //Integers in cairo
-    U8,
-    U16,
-    U32,
-    U64,
-    U128,
-    U256,
+    //U8,
+    //U16,
+    //U32,
+    //U64,
+    //U128,
+    //U256,
 
     //Field element 
     Felt252,
@@ -139,38 +139,97 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
             let number_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
 
             // Start with the assumption that there's no type hint
-            let mut type_hint: Option<String> = None;
+            let mut type_hint = None;
 
             // Check for underscore
             if let Some(&'_') = characters.peek() {
                 characters.next(); // Consume the underscore
 
                 // You can now branch based on the character after the underscore
-                if let Some(&next_ch) = characters.peek() {
+                if let Some(&'u') = characters.peek() {
+ 
+                    characters.next();
 
-                    println!("Character after _: {}", next_ch);
-                    match next_ch {
-                        'u' => {
-                            characters.next();
-                            let type_string: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
-                            type_hint = Some(type_string);
+                    let type_digits: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
+                    
+                     match type_digits.as_str() {
+
+                         "8" => {
+ 
+                             println!("Detected hint: u8");
+                             type_hint = Some("u8".to_string());
                          },
-                         'f' => {
-                             let felt_hint: String = characters.by_ref().take_while(|ch| ch.is_ascii_alphabetic()).collect();
-                             if felt_hint == "felt252" {
-                                 type_hint = Some(felt_hint);
-                             }
+
+
+                         "16" => {
+
+                             println!("Detected hint: u16");
+                             type_hint = Some("u16".to_string());
+                         },
+
+
+                         "32" => {
+
+                             println!("Detected hint: u32");
+                             type_hint = Some("u32".to_string());
+                         },
+
+
+                         "64" => {
+
+                             println!("Detected hint: u64");
+                             type_hint = Some("u64".to_string());
+                         },
+
+                         "128" => {
+
+                             println!("Detected hint: u128");
+                             type_hint = Some("u128".to_string());
+                         },
+
+                         "256" => {
+
+                             println!("Detected hint: 256");
+                             type_hint = Some("u256".to_string());
                          }
-                         _ => {}
+
+                         _ => {
+
+                             println!("unexpected token after 'u': u{}", type_digits);
+                         }
                      }
+
+                     for _ in type_digits.chars() {
+
+                         characters.next();
+                     }
+
+                 } else {
+                 
+                     let felt_hint: String = characters.by_ref().take_while(|ch| ch.is_ascii_alphabetic()).collect();
+                     println!("Detected type hint: {}", felt_hint);
+
+                     if felt_hint == "felt252" {
+
+                         type_hint = Some(felt_hint.clone());
+
+                         for _ in felt_hint.chars() {
+
+                             characters.next();
+                         }
+                     }
+                 
                  }
              }
 
-            // Now, decide the final type hint, with a default of "felt252" if none was found
-            let final_type_hint = type_hint.unwrap_or_else(|| "felt252".to_string());
+            // Token creation
+            if let Some(type_hint) = type_hint {
 
-           // Finally, push the token
-           tokens.push(Token::Number(number_string, Some(final_type_hint)));
+                tokens.push(Token::Number(number_string, Some(type_hint)));
+            } else {
+
+                tokens.push(Token::Number(number_string, None));
+            }
 
            continue;
         }
@@ -244,35 +303,7 @@ fn lex_input(your_input: &str) -> Result<Vec<Token>, LexError> {
 
             },
 
-           //continue from here writing matches for integers
-            'u' => {
-
-                let number_strings: String = characters.by_ref().take_while(|ch| ch.is_digit(10)).collect();
-
-                match number_strings.as_str() {
-
-                    "8" => tokens.push(Token::U8),
-
-                    "16" => tokens.push(Token::U16),
-
-                    "32" => tokens.push(Token::U32),
-
-                    "64" => tokens.push(Token::U64),
-
-                    "128" => tokens.push(Token::U128),
-
-                    "256" => tokens.push(Token::U256),
-
-                    //add handling of unexpected integers
-                    _ => {
-
-                        return Err(LexError::UnrecognizedToken("Unexpected Integer".to_string()));
-                    }
-
-                }
-
-            },
-
+           
 
             '+' => { 
 
