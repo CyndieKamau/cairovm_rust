@@ -1,9 +1,8 @@
-use logos::Logos;
+use logos::{Logos, Lexer};
 
 #[derive(Debug, Logos, PartialEq)]
-#[logos(skip r"[ \t\n\f]+")] 
 
-enum Token {
+pub enum Token {
 
     #[token("as")]
     As,
@@ -116,13 +115,54 @@ enum Token {
     #[token("[]")]
     Bracket,
 
-    
+    #[regex("[a-zA-Z_][a-zA-Z0-9_]*", callback = process_identifier)]
+    Identifier(String),
 
+    #[regex(r"\d+(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?", process_number_hint)]
+    Number(NumberData),
 
+    // Error handling,
+    Error,
+    #[regex(r"[ \t\n\f]+", logos::skip)]
+    Whitespace,
 
+}
+#[derive(PartialEq, Debug)]
+pub struct NumberData {
+    value: String,
+    type_hint: Option<String>,
+}
+
+pub fn process_identifier(lex: &mut Lexer<Token>) -> String {
+    lex.slice().to_string()
+}
+
+pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
+    let slice = lex.slice();
+    let parts: Vec<&str> = slice.split('_').collect();
+    NumberData {
+        value: parts[0].to_string(),
+        type_hint: parts.get(1).map(|s| s.to_string()),
+    }
+}
+
+pub fn lex_input(input: &str) -> Vec<Token> {
+    let mut lexer = Token::lexer(input);
+    let mut tokens = Vec::new();
+
+    while let Some(result) = lexer.next() {
+        match result {
+            Ok(token) => tokens.push(token),
+            Err(_) => {
+                // Here you can handle the error, e.g., log it or push a custom error token
+                // For now, we'll just push a generic Error token
+                tokens.push(Token::Error);
+            }
+        }
+    }
+
+    tokens
 }
 
 
-fn main() {
-    println!("Hello, world!");
-}
+
