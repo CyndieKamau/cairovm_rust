@@ -20,10 +20,10 @@ const MainLayout = (props: ImainLayout) => {
       </AppShell.Header>
 
       <AppShell.Main>
-        <FloatingImage src='/images/img.png' width='100px' top='50px' right='50px' />
-        <FloatingImage src='/images/img.png' width='200px' bottom='20px' left='20px' />
-        {/* <FloatingImage src='/images/img.png' width='200px' top='400px' left='50px' />
-        <FloatingImage src='/images/img.png' width='100px' top='300px' left='300px' /> */}
+        <FloatingImage src='/images/space.png' width='400px' top='40px' right='20px' />
+        {/* <FloatingImage src='/images/book.png' width='400px' bottom='10px' left='10px' /> */}
+        <FloatingImage src='/images/star.png' width='100px' top='400px' right='50px' />
+        <FloatingImage src='/images/star.png' width='150px' top='15px' right='15px' />
         <Container className="h-100" size={'xl'}>
           {children}
         </Container>
