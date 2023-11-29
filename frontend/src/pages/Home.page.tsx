@@ -6,8 +6,6 @@ export function HomePage() {
     <>
       <Welcome />
       <TokenForm />
-
-      
     </>
   );
 }

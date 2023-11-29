@@ -50,6 +50,12 @@ let mut x = 5_u32
 [Let, Mut, Identifier("x"), Assign, Number("5", None), Identifier("u32")]
 ```
 
+# Deployment of Actix Web Server using DigitalOcean
+
+## STEP 1: Create a Digital Ocean account
+
+## STEP 2: 
+
 
 
 

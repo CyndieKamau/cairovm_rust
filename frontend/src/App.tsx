@@ -16,14 +16,10 @@ export default function App() {
     <MantineProvider theme={theme}>
       <Notifications />
       <ModalsProvider>
-        
         <MainLayout>
           <Router />
-
-        </MainLayout>     
-
+        </MainLayout>
       </ModalsProvider>
-       
     </MantineProvider>
   );
 }
