@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -52,10 +53,17 @@ async fn tokenize_code(input: web::Json<CodeInput>) -> impl Responder {
 //Setting up the Actix web server
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();  //Initialize the logger
+    env_logger::init();  // Initialize the logger
 
     HttpServer::new(|| {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:5174") // Vite frontend server
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])   // The API's using POST requests
+            .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE])
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)                            // Apply CORS middleware
             .service(web::resource("/tokenize").route(web::post().to(tokenize_code)))
     })
     .bind("127.0.0.1:8080")?
