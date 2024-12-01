@@ -22,17 +22,26 @@ pub enum Token {
     #[token("enum")]
     Enum,
 
+    #[token("extern")]
+    Extern,
+
     #[token("false")]
     False,
 
     #[token("fn")]
     Fn,
 
+    #[token("for")]
+    For,
+
     #[token("if")]
     If,
 
-    #[token("for")]
-    For,
+    #[token("impl")]
+    Impl,
+
+    #[token("implicits")]
+    Implicits,
 
     #[token("let")]
     Let,
@@ -43,11 +52,23 @@ pub enum Token {
     #[token("match")]
     Match,
 
+    #[token("mod")]
+    Mod,
+
     #[token("mut")]
     Mut,
 
+    #[token("nopanic")]
+    NoPanic,
+
     #[token("of")]
     Of,
+
+    #[token("pub")]
+    Pub,
+
+    #[token("ref")]
+    Ref,
 
     #[token("return")]
     Return,
@@ -55,17 +76,29 @@ pub enum Token {
     #[token("struct")]
     Struct,
 
+    #[token("trait")]
+    Trait,
+
     #[token("true")]
     True,
 
-    #[token("trait")]
-    Trait,
+    #[token("type")]
+    Type,
 
     #[token("fieldElement")]
     Felt252,
 
+    #[token("use")]
+    Use,
+
+    #[token("while")]
+    While,
+
     #[token(".")]
     Period,
+
+    #[token(",")]
+    Comma,
 
     #[token("!")]
     Exclamation,
@@ -77,13 +110,13 @@ pub enum Token {
     Minus,
 
     #[token("=")]
-    Assign,
+    Equals,
 
     #[token("==")]
-    Equal,
+    DoubleEquals,
 
-    #[token(";")]
-    SemiColon,
+    #[token("!=")]
+    NotEquals,
 
     #[token("*")]
     Asterik,
@@ -91,11 +124,26 @@ pub enum Token {
     #[token(":")]
     Colon,
 
+    #[token("::")]
+    DoubleColon,
+
     #[token("_")]
     UnderScore,
 
     #[token("/")]
-    Divide,
+    Slash,
+
+    #[token("<")]
+    LessThan,
+
+    #[token(">")]
+    GreaterThan,
+
+    #[token("<=")]
+    LessThanEqual,
+
+    #[token(">=")]
+    GreaterThanEqual,
 
     #[token("%")]
     Percent,
@@ -106,25 +154,90 @@ pub enum Token {
     #[token("->")]
     Arrow,
 
-    #[token("()")]
-    Parenthesis,
+    #[token("(")]
+    LeftParenthesis,
 
-    #[token("{}")]
-    Braces,
+    #[token(")")]
+    RightParenthesis,
 
-    #[token("[]")]
-    Bracket,
+    #[token("{")]
+    LeftBrace,
+
+    #[token("}", priority = 2)]
+    RightBrace,
+
+    #[token("[")]
+    LeftBracket,
+
+    #[token("]")]
+    RightBracket,
+
+    #[token("@")]
+    Snapshot,
+
+    #[token("#")]
+    Hash,
+
+    #[token("||")]
+    Or,
+
+    #[token("?")]
+    Question,
+
+    #[token("u8")]
+    U8,
+
+    #[token("u16")]
+    U16,
+
+    #[token("u32")]
+    U32,
+
+    #[token("u64")]
+    U64,
+
+    #[token("u128")]
+    U128,
+
+    #[token("u256")]
+    U256,
+
+    #[token("felt252")]
+    Felt,
+
+    #[token("usize")]
+    Usize,
+
+    #[token(";", priority = 2)]
+    SemiColon,
 
     #[regex("[a-zA-Z_][a-zA-Z0-9_]*", callback = process_identifier)]
     Identifier(String),
 
-    #[regex(r"\d+(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?", process_number_hint)]
+    //#[regex(r"\d+(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?", process_number_hint, priority = 2)]
+    #[regex(r"\d+(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?", validate_number, priority = 2)]
     Number(NumberData),
 
-    // Error handling,
-    Error,
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Whitespace,
+
+    // Skip comments
+    #[regex(r"//[^\n]*", logos::skip)]
+    Comment,
+
+    //Handling attributes as a single token; TODO:The parser will handle it
+    #[regex(r"#\[[^\]]+\]", |lex| lex.slice().to_string())]
+    Attribute(String),
+
+
+    // Error handling,
+    //#[regex(r"[^a-zA-Z0-9_ \t\n\f]+", |lex| lex.slice().to_string())]
+    //TODO: Tweak the regex to handle grouping of invalid tokens;
+    // eg `$invalid` instead of `$` and `invalid`
+    //#[regex(r"[^\w \t\n\f;{}\(\)\[\]]+", |lex| lex.slice().to_string())]
+    #[regex(r"[^\w \t\n\f;{}\(\)\[\]]+", |lex| lex.slice().to_string())]
+    Error(String),
+    
 
 }
 #[derive(PartialEq, Debug)]
@@ -133,18 +246,76 @@ pub struct NumberData {
     type_hint: Option<String>,
 }
 
+impl NumberData {
+    pub fn new(value: String, type_hint: Option<String>) -> Self {
+        NumberData { value, type_hint }
+    }
+}
+
+pub fn validate_number(lex: &mut Lexer<Token>) -> NumberData {
+    let slice = lex.slice();
+    let parts: Vec<&str> = slice.split('_').collect();
+
+    // The numeric value
+    let value = parts[0].to_string();
+
+    // Extract type hint, if any
+    let type_hint = if parts.len() > 1 {
+        Some(parts[1].to_string())
+    } else {
+        None
+    };
+
+    // Validate the type hint
+    let valid_hints = ["u8", "u16", "u32", "u64", "u128", "u256", "felt252"];
+    if let Some(ref hint) = type_hint {
+        if !valid_hints.contains(&hint.as_str()) {
+            panic!("Invalid type hint in number: {}", slice);
+        }
+    }
+
+    NumberData { value, type_hint }
+}
+
 pub fn process_identifier(lex: &mut Lexer<Token>) -> String {
     lex.slice().to_string()
 }
 
 pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
     let slice = lex.slice();
-    let parts: Vec<&str> = slice.split('_').collect();
-    NumberData {
-        value: parts[0].to_string(),
-        type_hint: parts.get(1).map(|s| s.to_string()),
+    // Use regex to correctly separate number from optional type hint
+    let re = regex::Regex::new(r"(\d+)(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?").unwrap();
+    if let Some(captures) = re.captures(slice) {
+        let value = captures.get(1).map_or("", |m| m.as_str()).to_string();
+        let type_hint = captures.get(2).map(|m| m.as_str().trim_start_matches('_').to_string());
+        return NumberData { value, type_hint };
     }
+
+    NumberData {
+        value: slice.to_string(),
+        type_hint: None,
+    }
+    
 }
+
+// pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
+//     let slice = lex.slice();
+//     let parts: Vec<&str> = slice.split('_').collect();
+
+//     let value = parts[0].to_string();
+//     let type_hint = parts.get(1).map(|s| s.to_string());
+
+//     // Validate type hint
+//     let valid_hints = ["u8", "u16", "u32", "u64", "u128", "u256", "felt252"];
+//     if let Some(ref hint) = type_hint {
+//         if !valid_hints.contains(&hint.as_str()) {
+//             // Reject the token outright by panicking inside the callback
+//             panic!("{}", format!("Invalid type hint in number: {}", slice));
+//         }
+//     }
+
+//     NumberData { value, type_hint }
+// }
 
 pub fn lex_input(input: &str) -> Vec<Token> {
     let mut lexer = Token::lexer(input);
@@ -156,7 +327,7 @@ pub fn lex_input(input: &str) -> Vec<Token> {
             Err(_) => {
                 // Here you can handle the error, e.g., log it or push a custom error token
                 // For now, we'll just push a generic Error token
-                tokens.push(Token::Error);
+                tokens.push(Token::Error(String::from(lexer.slice())));
             }
         }
     }
