@@ -102,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_symbols_and_delimiters() {
-        let input = "( ) { } [ ] , . : :: ; _ !";
+        let input = "( ) { } [ ] , . : :: ; !";
 
         let expected_tokens = vec![
             crate::Token::LeftParenthesis,
@@ -116,7 +116,7 @@ mod tests {
             crate::Token::Colon,
             crate::Token::DoubleColon,
             crate::Token::SemiColon,
-            crate::Token::UnderScore,
+            //crate::Token::UnderScore,
             crate::Token::Exclamation,
         ];
 
@@ -260,6 +260,38 @@ mod tests {
     }
 
     #[test]
+    fn test_underscore() {
+        let input = "_";
+        let expected_tokens = vec![
+            Token::Identifier("_".to_string()),
+        ];
+        assert_eq!(lex_input(input), expected_tokens);
+    }
+
+    #[test]
+    fn test_combined_underscore_and_identifier() {
+        let input = "_ validIdentifier";
+        let expected_tokens = vec![
+            //Token::UnderScore,
+            Token::Identifier("_".to_string()),
+            Token::Identifier("validIdentifier".to_string()),
+        ];
+        assert_eq!(lex_input(input), expected_tokens);
+    }
+
+
+    #[test]
+    fn test_invalid_token_sequences() {
+        let input = "==+";
+        let expected_tokens = vec![
+            Token::Error("==+".to_string())
+        ];
+        assert_eq!(lex_input(input), expected_tokens); // Parser must validate sequences
+    }
+
+    //TODO: Try to fix invalid type hints at the parser level
+    // TODO: These current tests are failing, I'll have to handle at the parser level 
+    #[test]
     fn test_invalid_type_hints() {
         let input = "12_u99";
         let expected_tokens = vec![
@@ -267,8 +299,39 @@ mod tests {
         ];
 
         assert_eq!(lex_input(input), expected_tokens);
-        println!("{:?}", lex_input(input));
     }
+
+    #[test]
+    fn test_invalid_identifiers() {
+        let input = "@variable variable#";
+        let expected_tokens = vec![
+            //Token::Error("123variable".to_string()),
+            Token::Error("@variable".to_string()),
+            Token::Error("variable#".to_string()),
+        ];
+        assert_eq!(lex_input(input), expected_tokens);
+    }
+
+    #[test]
+    fn test_unterminated_strings() {
+        let input = "\"Hello";
+        let expected_tokens = vec![
+            Token::Error("\"Hello".to_string()), // Lexer does not detect untermination
+        ];
+        assert_eq!(lex_input(input), expected_tokens); // Parser must detect untermination
+    }
+
+    #[test]
+    fn test_invalid_number_formats() {
+        let input = "42variable 23_";
+        let expected_tokens = vec![
+            Token::Number(NumberData::new("42".to_string(), None)), // 42
+            Token::Identifier("variable".to_string()),             // variable
+            Token::Number(NumberData::new("23".to_string(), None)), // 23 (Parser must validate trailing _)
+        ];
+        assert_eq!(lex_input(input), expected_tokens); // Parser must validate
+    }
+
 
 
 

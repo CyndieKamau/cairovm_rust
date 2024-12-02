@@ -127,9 +127,6 @@ pub enum Token {
     #[token("::")]
     DoubleColon,
 
-    #[token("_")]
-    UnderScore,
-
     #[token("/")]
     Slash,
 
@@ -215,7 +212,8 @@ pub enum Token {
     Identifier(String),
 
     //#[regex(r"\d+(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?", process_number_hint, priority = 2)]
-    #[regex(r"\d+(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?", validate_number, priority = 2)]
+    //#[regex(r"\d+(_(u8|u16|u32|u64|u128|u256|felt252))?", process_number_hint, priority = 2)]
+    #[regex(r"\d+(_(u8|u16|u32|u64|u128|u256|felt252))?", process_number_hint, priority = 2)]
     Number(NumberData),
 
     #[regex(r"[ \t\n\f]+", logos::skip)]
@@ -252,50 +250,61 @@ impl NumberData {
     }
 }
 
-pub fn validate_number(lex: &mut Lexer<Token>) -> NumberData {
-    let slice = lex.slice();
-    let parts: Vec<&str> = slice.split('_').collect();
+// pub fn validate_number(lex: &mut Lexer<Token>) -> NumberData {
+//     let slice = lex.slice();
+//     let parts: Vec<&str> = slice.split('_').collect();
 
-    // The numeric value
-    let value = parts[0].to_string();
+//     // The numeric value
+//     let value = parts[0].to_string();
 
-    // Extract type hint, if any
-    let type_hint = if parts.len() > 1 {
-        Some(parts[1].to_string())
-    } else {
-        None
-    };
+//     // Extract type hint, if any
+//     let type_hint = if parts.len() > 1 {
+//         Some(parts[1].to_string())
+//     } else {
+//         None
+//     };
 
-    // Validate the type hint
-    let valid_hints = ["u8", "u16", "u32", "u64", "u128", "u256", "felt252"];
-    if let Some(ref hint) = type_hint {
-        if !valid_hints.contains(&hint.as_str()) {
-            panic!("Invalid type hint in number: {}", slice);
-        }
-    }
+//     // Validate the type hint
+//     let valid_hints = ["u8", "u16", "u32", "u64", "u128", "u256", "felt252"];
+//     if let Some(ref hint) = type_hint {
+//         if !valid_hints.contains(&hint.as_str()) {
+//             panic!("Invalid type hint in number: {}", slice);
+//         }
+//     }
 
-    NumberData { value, type_hint }
-}
+//     NumberData { value, type_hint }
+// }
 
 pub fn process_identifier(lex: &mut Lexer<Token>) -> String {
     lex.slice().to_string()
 }
 
+// pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
+//     let slice = lex.slice();
+//     // Use regex to correctly separate number from optional type hint
+//     let re = regex::Regex::new(r"(\d+)(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?").unwrap();
+//     if let Some(captures) = re.captures(slice) {
+//         let value = captures.get(1).map_or("", |m| m.as_str()).to_string();
+//         let type_hint = captures.get(2).map(|m| m.as_str().trim_start_matches('_').to_string());
+//         return NumberData { value, type_hint };
+//     }
+
+//     NumberData {
+//         value: slice.to_string(),
+//         type_hint: None,
+//     }
+    
+// }
+
 pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
     let slice = lex.slice();
-    // Use regex to correctly separate number from optional type hint
-    let re = regex::Regex::new(r"(\d+)(_u8|_u16|_u32|_u64|_u128|_u256|_felt252)?").unwrap();
-    if let Some(captures) = re.captures(slice) {
-        let value = captures.get(1).map_or("", |m| m.as_str()).to_string();
-        let type_hint = captures.get(2).map(|m| m.as_str().trim_start_matches('_').to_string());
-        return NumberData { value, type_hint };
-    }
+    println!("Processing number hint: {}", slice);
+    let parts: Vec<&str> = slice.split('_').collect();
 
-    NumberData {
-        value: slice.to_string(),
-        type_hint: None,
-    }
-    
+    let value = parts[0].to_string();
+    let type_hint = parts.get(1).map(|s| s.to_string());
+
+    NumberData { value, type_hint }
 }
 
 // pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
