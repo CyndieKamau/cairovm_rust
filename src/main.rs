@@ -2,9 +2,9 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use std::env;
+use logos::Logos;
+use crate::lexer::logos_lexer::{Token, lex_input};
 
-use logos::Lexer;
-use crate::lexer::Token;
 mod lexer;
 
 
@@ -26,47 +26,44 @@ struct TokenOutput {
 }
 
 async fn tokenize_code(input: web::Json<CodeInput>) -> impl Responder {
-    let mut lexer = Lexer::<Token>::new(&input.code);
+    let mut lexer = Token::lexer(&input.code); // Create a Logos lexer
     let mut tokens = Vec::new();
 
-    while let Some(result) = lexer.next() {
-        match result {
-            Ok(token) => {
-                let token_info = TokenInfo {
-                    token_type: format!("{:?}", token), // Adjust based on how you want to represent the token type
-                    span: (lexer.span().start, lexer.span().end),
-                    slice: lexer.slice().to_string(),
-                };
-                tokens.push(token_info);
+    while let Some(token) = lexer.next() {
+        let token_info = match token {
+            Ok(t) => TokenInfo {
+                token_type: format!("{:?}", t),
+                span: (lexer.span().start, lexer.span().end),
+                slice: lexer.slice().to_string(),
             },
-            Err(_) => {
-                // Handle lexical errors here
-                // For now, we'll just log to console and continue
-                eprintln!("Lexical error at span: {:?}", lexer.span());
-            }
-        }
+            Err(_) => TokenInfo {
+                token_type: "Error".to_string(),
+                span: (lexer.span().start, lexer.span().end),
+                slice: lexer.slice().to_string(),
+            },
+        };
+        tokens.push(token_info);
     }
 
-    HttpResponse::Ok().json(TokenOutput { tokens })
+    HttpResponse::Ok().json(TokenOutput { tokens }) // Return JSON response
 }
 
-//Setting up the Actix web server
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();  // Initialize the logger
+    env_logger::init(); // Initialize the logger
 
     HttpServer::new(|| {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:5174") // Vite frontend server
-            .allowed_methods(vec!["GET", "POST", "OPTIONS"])   // The API's using POST requests
+            .allowed_origin("http://localhost:5174") // Allow Vite frontend
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
             .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE])
             .max_age(3600);
 
         App::new()
-            .wrap(cors)                            // Apply CORS middleware
-            .service(web::resource("/tokenize").route(web::post().to(tokenize_code)))
+            .wrap(cors) // Apply CORS middleware
+            .service(web::resource("/tokenize").route(web::post().to(tokenize_code))) // Tokenization endpoint
     })
-    .bind("127.0.0.1:8080")?
+    .bind("127.0.0.1:8080")? // Bind to localhost
     .run()
     .await
 }
