@@ -127,9 +127,9 @@ mod tests {
     fn test_errors() {
         let input = "$invalid @@@";
         let expected_tokens = vec![
-            Token::Error("$".to_string()),  // $ is invalid
+            Token::Error("Unexpected character '$' at span (0, 1)".to_string()),  // $ is invalid
             Token::Identifier("invalid".to_string()),
-            Token::Error("@@@".to_string()),  // @@@ is invalid
+            Token::Error("Unexpected character '@@@' at span (9, 12)".to_string()),  // @@@ is invalid
         ];
         assert_eq!(lex_input(input), expected_tokens);
     }

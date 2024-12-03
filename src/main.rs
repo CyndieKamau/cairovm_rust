@@ -54,7 +54,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:5174") // Allow Vite frontend
+            .allowed_origin("http://localhost:3000") // Allow Vite frontend
             .allowed_methods(vec!["GET", "POST", "OPTIONS"])
             .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE])
             .max_age(3600);

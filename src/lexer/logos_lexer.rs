@@ -1,6 +1,7 @@
 use logos::{Logos, Lexer};
 
 #[derive(Debug, Logos, PartialEq)]
+#[logos(extras = usize)]
 
 pub enum Token {
 
@@ -208,6 +209,13 @@ pub enum Token {
     #[token(";", priority = 2)]
     SemiColon,
 
+    #[regex(r"'[^']*'", |lex| lex.slice().to_string())] // single-quoted strings
+    #[regex(r#""[^"]*""#, |lex| lex.slice().to_string())] // Double-quoted strings
+    StringLiteral(String),  // 'Alex', "Alex"
+
+    #[regex(r"'[^']'", |lex| lex.slice().to_string())]
+    CharacterLiteral(String), // 'A'
+
     #[regex("[a-zA-Z_][a-zA-Z0-9_]*", callback = process_identifier)]
     Identifier(String),
 
@@ -233,7 +241,17 @@ pub enum Token {
     //TODO: Tweak the regex to handle grouping of invalid tokens;
     // eg `$invalid` instead of `$` and `invalid`
     //#[regex(r"[^\w \t\n\f;{}\(\)\[\]]+", |lex| lex.slice().to_string())]
-    #[regex(r"[^\w \t\n\f;{}\(\)\[\]]+", |lex| lex.slice().to_string())]
+    //#[regex(r"[^\w \t\n\f;{}\(\)\[\]]+", |lex| lex.slice().to_string(), priority = 1)] (use this)
+    #[regex(r"[^\w \t\n\f;{}\(\)\[\].,:<>=+!]+", |lex| {
+        let slice = lex.slice();
+        let start = lex.extras; // Access the current offset directly
+        let end = start + slice.len(); // Calculate the end of the span
+        lex.extras += slice.len(); // Update the offset
+        format!(
+            "Unexpected character '{}' at span ({}, {})",
+            slice, start, end
+        )
+    }, priority = 1)]
     Error(String),
     
 
@@ -326,23 +344,88 @@ pub fn process_number_hint(lex: &mut Lexer<Token>) -> NumberData {
 //     NumberData { value, type_hint }
 // }
 
+// pub fn lex_input(input: &str) -> Vec<Token> {
+//     let mut lexer = Token::lexer(input);
+//     lexer.extras = 0; // Initialize the offset
+//     let mut tokens = Vec::new();
+
+//     while let Some(result) = lexer.next() {
+//         let slice = lexer.slice(); // Get the current token slice
+//         let length = slice.len(); // Calculate the token length
+
+//         println!(
+//             "Processing token: '{}' | Start: {} | Length: {} | End: {}",
+//             slice,
+//             lexer.extras,
+//             length,
+//             lexer.extras + length
+//         );
+
+//         match result {
+//             Ok(token) => {
+//                 tokens.push(token); // Add the token to the list
+//             }
+//             Err(_) => {
+//                 // Handle errors with detailed span information
+//                 let start = lexer.extras;
+//                 let end = start + length;
+//                 tokens.push(Token::Error(format!(
+//                     "Unexpected character '{}' at span ({}, {})",
+//                     slice, start, end
+//                 )));
+//             }
+//         }
+
+//         // Fallback: Always increment the offset to account for skipped tokens
+//         lexer.extras += length;
+//     }
+
+//     tokens
+// }
+
+fn calculate_line_column(input: &str, position: usize) -> (usize, usize) {
+    let mut line = 1;
+    let mut column = 1;
+
+    for (idx, char) in input.chars().enumerate() {
+        if idx == position {
+            break;
+        }
+        if char == '\n' {
+            line += 1;
+            column = 1;
+        } else {
+            column += 1;
+        }
+    }
+
+    (line, column)
+}
+
 pub fn lex_input(input: &str) -> Vec<Token> {
     let mut lexer = Token::lexer(input);
+    lexer.extras = 0; // Initialize offset
     let mut tokens = Vec::new();
 
     while let Some(result) = lexer.next() {
+        let slice = lexer.slice();
+        let length = slice.len();
+        let start = lexer.extras;
+
         match result {
             Ok(token) => tokens.push(token),
             Err(_) => {
-                // Here you can handle the error, e.g., log it or push a custom error token
-                // For now, we'll just push a generic Error token
-                tokens.push(Token::Error(String::from(lexer.slice())));
+                let end = start + length;
+                let (line, column) = calculate_line_column(input, start);
+                tokens.push(Token::Error(format!(
+                    "Unexpected character '{}' at line {}, column {} (span: {}-{})",
+                    slice, line, column, start, end
+                )));
             }
         }
+
+        lexer.extras += length; // Update offset
     }
 
     tokens
 }
-
-
-
