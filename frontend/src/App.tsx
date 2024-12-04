@@ -15,11 +15,15 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+    console.log('API_URL:', process.env.REACT_APP_BACKEND_URL);
+
     const tokenizeCode = async () => {
         try {
             const response = await axios.post(API_URL + '/tokenize', {
                 code,
             });
+
+            console.log('Request URL:', `${API_URL}/tokenize`);
             setTokens(response.data.tokens);
             setError(null); // Clear any previous errors
         } catch (err) {
