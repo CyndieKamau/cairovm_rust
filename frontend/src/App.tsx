@@ -13,10 +13,11 @@ const App: React.FC = () => {
     const [code, setCode] = useState(''); // Code input
     const [tokens, setTokens] = useState<TokenInfo[]>([]); // Token output
     const [error, setError] = useState<string | null>(null);
+    const API_URL = process.env.REACT_APP_BACKEND_URL;
 
     const tokenizeCode = async () => {
         try {
-            const response = await axios.post('http://104.248.113.208/tokenize', {
+            const response = await axios.post(API_URL + '/tokenize', {
                 code,
             });
             setTokens(response.data.tokens);
