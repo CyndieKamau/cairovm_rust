@@ -56,7 +56,7 @@ async fn main() -> std::io::Result<()> {
         let cors = Cors::default()
             //.allowed_origin("http://localhost:3000") // Allow frontend
             .allowed_origin_fn(|origin, _req_head| {
-                origin == "http://localhost:3000" || origin == "https://cairovm-rust-starknet.vercel.app/"
+                origin == "http://localhost:3000" || origin == "https://cairovm-rust-five.vercel.app/"
             })
             .allowed_methods(vec!["GET", "POST", "OPTIONS"])
             .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE])
