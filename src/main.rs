@@ -59,7 +59,8 @@ async fn main() -> std::io::Result<()> {
                 origin == "http://localhost:3000" || origin == "https://cairovm-rust-five.vercel.app/"
             })
             .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-            .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE])
+            .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE, actix_web::http::header::ACCEPT])
+            .supports_credentials()
             .max_age(3600);
 
         App::new()
