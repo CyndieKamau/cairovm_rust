@@ -16,7 +16,7 @@ const App: React.FC = () => {
 
     const tokenizeCode = async () => {
         try {
-            const response = await axios.post('http://127.0.0.1:8080/tokenize', {
+            const response = await axios.post('http://104.248.113.208/tokenize', {
                 code,
             });
             setTokens(response.data.tokens);
