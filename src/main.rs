@@ -50,24 +50,29 @@ async fn tokenize_code(input: web::Json<CodeInput>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init(); // Initialize the logger
+    env_logger::init(); 
 
     HttpServer::new(|| {
         let cors = Cors::default()
             //.allowed_origin("http://localhost:3000") // Allow frontend
             .allowed_origin_fn(|origin, _req_head| {
-                origin == "http://localhost:3000" || origin == "https://cairovm-rust-five.vercel.app/"
+                origin == "http://localhost:3000" || origin == "https://cairovm-rust-five.vercel.app"
             })
             .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-            .allowed_headers(vec![actix_web::http::header::CONTENT_TYPE, actix_web::http::header::ACCEPT])
+            .allowed_headers(vec![
+                actix_web::http::header::CONTENT_TYPE,
+                actix_web::http::header::ACCEPT,
+                actix_web::http::header::ORIGIN,
+                actix_web::http::header::AUTHORIZATION,
+            ])
             .supports_credentials()
             .max_age(3600);
 
         App::new()
-            .wrap(cors) // Apply CORS middleware
+            .wrap(cors) 
             .service(web::resource("/tokenize").route(web::post().to(tokenize_code))) // Tokenization endpoint
     })
-    .bind("0.0.0.0:8080")? // Bind to localhost
+    .bind("0.0.0.0:8080")? 
     .run()
     .await
 }
