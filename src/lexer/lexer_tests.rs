@@ -279,7 +279,32 @@ mod tests {
         assert_eq!(lex_input(input), expected_tokens);
     }
 
+    #[test]
+    fn test_struct_with_bytearray() {
+        let input = r#"
+        struct User {
+            active: bool,
+            username: ByteArray,
+        }
+        "#;
+        let expected_tokens = vec![
+            Token::Struct,
+            Token::Identifier("User".to_string()),
+            Token::LeftBrace,
+            Token::Identifier("active".to_string()),
+            Token::Colon,
+            Token::Bool,
+            Token::Comma,
+            Token::Identifier("username".to_string()),
+            Token::Colon,
+            Token::ByteArray,
+            Token::Comma,
+            Token::RightBrace,
+        ];
+        assert_eq!(lex_input(input), expected_tokens);
+    }
 
+    //test also failing, currently debating whether to handle this at parser level
     #[test]
     fn test_invalid_token_sequences() {
         let input = "==+";

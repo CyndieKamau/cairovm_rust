@@ -11,6 +11,12 @@ pub enum Token {
     #[token("break")]
     Break,
 
+    #[token("bool")]
+    Bool,
+
+    #[token("ByteArray")]
+    ByteArray,
+
     #[token("const")]
     Const,
 
